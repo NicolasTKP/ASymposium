@@ -29,7 +29,7 @@ def main():
     driver = webdriver.Chrome(service=service, options=options)
 
     try:
-        url = f"https://publicinfobanjir.water.gov.my/wl-graph/?stationid={param['station']}&datefrom={param['from']}&dateto={param['to']}&datafreq={param['datafreq']}"
+        url = f"https://publicinfobanjir.water.gov.my/wp-content/themes/enlighten/query/searchstationWL.php?name=kuala lumpur&language=en"
         driver.get(url)
 
         wait = WebDriverWait(driver,9999999999)

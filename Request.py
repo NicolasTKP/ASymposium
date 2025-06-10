@@ -1,7 +1,22 @@
 import requests
+import ssl
+from requests.adapters import HTTPAdapter
+from urllib3.poolmanager import PoolManager
 
-url = "https://publicinfobanjir.water.gov.my/wl-graph/?stationid=3216005_&datefrom=01/12/2024%2022:00&dateto=12/06/2025%2022:00&ymax=&ymin=&xfreq=6&datafreq=60&lang=en"
+class UnsafeTLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        context = ssl.create_default_context()
+        context.options |= ssl.OP_LEGACY_SERVER_CONNECT
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE 
+        kwargs['ssl_context'] = context
+        return super().init_poolmanager(*args, **kwargs)
+
+session = requests.Session()
+session.mount("https://", UnsafeTLSAdapter())
+
+url = "https://publicinfobanjir.water.gov.my/rf-graph/?stationid=3216001_&lang=en"
 headers = {"User-Agent": "Mozilla/5.0"}
 
-response = requests.get(url, headers=headers, verify=False)
+response = session.get(url, headers=headers, verify=False)
 print(response.text)

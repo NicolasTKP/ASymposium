@@ -22,12 +22,13 @@ def readings_populated(driver):
         return False
 
 def main():
+    global param
     service = Service(CHROMEDRIVER_PATH)
     options = webdriver.ChromeOptions()
     # options.add_argument("--headless")  # Run in headless mode
 
     driver = webdriver.Chrome(service=service, options=options)
-
+    df = pd.DataFrame()
     try:
         url = f"https://publicinfobanjir.water.gov.my/wl-graph/?stationid={param['station']}&datefrom={param['from']}&dateto={param['to']}&ymax=&ymin=&xfreq=6&datafreq={param['datafreq']}&lang=en"
         driver.get(url)
@@ -40,7 +41,10 @@ def main():
         readings = json.loads(readings_json)
 
         print("Readings data extracted:")
-        df = pd.DataFrame(readings)
+        new_df = pd.DataFrame(readings)
+        new_df.insert(0, 'station_id', param['station'])
+        new_df = new_df.drop('QueryCnt', axis=1)
+        df = pd.concat([df, new_df], ignore_index=True)
         print(df)
         # df.to_csv('waterlevels.csv', index=False)
 
