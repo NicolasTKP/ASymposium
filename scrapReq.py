@@ -33,7 +33,7 @@ params = {
 #    'station': ['3317004_','26409', '26419', '27370', '27371', '3117082_', '3117180_', '3216001_', '3216005_', '3217001_', '3217002_','3217003_', 
 #                '3217004_', '3117003_', '3217117_', '3217117_', '240901410223', '241101361117', '244201011017', '244401290318', '244903240721', '26380', 
 #                '26383', '26400', '26521', '26531', '27553', '27710', 'JPSA0001', ],
-    'station': ['27233','27234','3013003_', '3014080_','3015084_','3015089_', 'DESAKEMUNING', 'PANDAMARAN', 'PEKANMERU', 'SELATMUARA', '26558'],
+    'station': ['27303', '27313', '27315', '27811', '5905180_', '5905181_', '6015180_', 'KUBURPANJANG', 'PAYAMADINSON'],
     'from': '02/03/2024%2000:00',
     'to': '09/06/2025%2022:00',
     'datafreq': '60'
@@ -86,21 +86,8 @@ def getRF():
     start_date = datetime.strptime("02/03/2024", "%d/%m/%Y")
     end_date = datetime.strptime("09/06/2025", "%d/%m/%Y")
 
-    if os.path.exists('klangWL.csv') and os.path.getsize('klangWL.csv') > 0:
-        df = pd.read_csv('klangWL.csv')
-    else:
-        df = pd.DataFrame()
-
-    print("WL DataFrame loaded with shape:\n", df)
-
-    try:
-        station_ids = df["station_id"].unique()
-    except KeyError:
-        station_ids = []
-    print("Station IDs:", station_ids)
-
-    if os.path.exists('klangRF.csv') and os.path.getsize('klangRF.csv') > 0:
-        df = pd.read_csv('klangRF.csv')
+    if os.path.exists('kedahRF.csv') and os.path.getsize('kedahRF.csv') > 0:
+        df = pd.read_csv('kedahRF.csv')
     else:
         df = pd.DataFrame()
 
@@ -151,7 +138,7 @@ def getRF():
                 except ValueError:
                     print("Response not JSON")
                 finally:
-                    df.to_csv('klangRF.csv', index=False)
+                    df.to_csv('kedahRF.csv', index=False)
                     difference = datetime.now() - now
                     print(f"Time taken for {station}: {difference.total_seconds()} seconds")
                 start_date_str = end_date_str.replace("00:00", "00:01")  
