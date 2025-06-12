@@ -1,6 +1,4 @@
-klangWL.csv
-waterlevels.csv
-klangRF.csv
-cleaned_klangRF.csv
-cleaned_klangWL.csv
-kedahRF.csv
+Data/klangWL.csv
+Data/waterlevels.csv
+Data/klangRF.csv
+Data/kedahRF.csv
