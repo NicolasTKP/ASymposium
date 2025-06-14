@@ -53,7 +53,7 @@ combined_data = combined_data[combined_data.index.astype(str).str.len() == 10] #
 print(combined_data)
 print(combined_data.shape)
 scaled_data = scaler.fit_transform(combined_data)
-dump(scaler, 'scaler.save')
+dump(scaler, 'daily_scaler.save')
 
 # split 70% data for training, 20% for validate, 10% for testing
 total_samples = len(scaled_data)
