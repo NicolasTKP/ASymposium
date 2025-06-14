@@ -9,6 +9,8 @@ from joblib import dump, load
 from sklearn.metrics import mean_squared_error, r2_score
 from tensorflow.keras import regularizers
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+import tensorflow as tf
+from keras.saving import register_keras_serializable
 
 # Function to extract the data into an array of sequences. Eg: (if n_steps=20, y = row 20)
 def create_sequences(input_data, n_steps, n_ahead=1):
@@ -24,12 +26,18 @@ def create_sequences(input_data, n_steps, n_ahead=1):
 
 # import data
 df = pd.read_csv('Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
+df.index = pd.to_datetime(df.index, format='mixed')
+df['date_only'] = df.index.date
+max_wl_per_day = df.loc[df.groupby('date_only')['wl'].idxmax()]
+df = max_wl_per_day.drop(columns='date_only')
+
 rfT = df.reset_index().pivot_table(index='datetime', columns='station_id', values='rfdaily') # rf if hourly, rfdaily if daily
 rfT = rfT.sort_index() 
 wlT = df.reset_index().pivot_table(index='datetime', columns='station_id', values='wl')
 wlT = wlT.sort_index() 
 rfT = rfT.add_prefix('rf_')
 wlT = wlT.add_prefix('wl_')
+
 # clean data with mode values
 for col in rfT.columns:
     mode = rfT[col].mode()
@@ -41,20 +49,27 @@ for col in wlT.columns:
         wlT[col].fillna(mode[0], inplace=True)
 
 # validate data
-print(rfT.isna().sum())
-print(rfT.isna().sum().sum())
-print(rfT[rfT.isna().any(axis=1)])
-print(wlT.isna().sum())
-print(wlT.isna().sum().sum())
-print(wlT[wlT.isna().any(axis=1)])
+print(rfT)
+print(wlT)
+
+# print(rfT.isna().sum())
+# print(rfT.isna().sum().sum())
+# print(rfT[rfT.isna().any(axis=1)])
+# print(wlT.isna().sum())
+# print(wlT.isna().sum().sum())
+# print(wlT[wlT.isna().any(axis=1)])
 
 # scare the data within the range of 0 to 1, and convert the data to numpy array
 scaler = MinMaxScaler()
 combined_data = pd.concat([rfT, wlT], axis=1)
-combined_data = combined_data[combined_data.index.astype(str).str.len() == 10] # optional: convert the data to daily based
+#combined_data = combined_data[combined_data.index.astype(str).str.len() == 10] # optional: convert the data to daily based
 print(combined_data)
 print(combined_data.shape)
-scaled_data = scaler.fit_transform(combined_data)
+
+min_values = combined_data.min() * 0.7  # 30% lower
+max_values = combined_data.max() * 1.3  # 30% higher
+scaler.fit(pd.DataFrame([min_values, max_values]))
+scaled_data = scaler.transform(combined_data)
 dump(scaler, 'daily_scaler.save')
 
 
@@ -83,7 +98,7 @@ print("Validation Data Stats:\n", stats_validation, "\n")
 print("Testing Data Stats:\n", stats_testing, "\n")
 
 # create training data with the sequences function
-n_steps = 14 
+n_steps = 12 
 X_train, y_train = create_sequences(train_data, n_steps=n_steps) # n_steps days
 X_validation, y_validation = create_sequences(validation_data, n_steps=n_steps) # n_steps days
 X_test, y_test = create_sequences(testing_data, n_steps=n_steps) # n_steps days
@@ -91,19 +106,25 @@ print("Training data shape:", X_train.shape, y_train.shape)
 print("Validation data shape:", X_validation.shape, y_validation.shape)
 print("Testing data shape:", X_test.shape, y_test.shape)
 
+@register_keras_serializable()
+def custom_loss_with_variance(y_true, y_pred):
+    mse = tf.reduce_mean(tf.square(y_true - y_pred), axis=-1)  # normal MSE
+    std = tf.math.reduce_std(y_pred, axis=-1)                  # output variance
+    loss = mse - 0.1 * std                                     # reward variance slightly
+    return loss
+
 def training():
     # Build the LSTM model
     model = Sequential([
-        Input(shape=(n_steps, 6)), # n_steps = days, 6 features (rf and wl for 3 stations each)
+        Input(shape=(n_steps, 8)), # n_steps = days, 8 features (rf and wl for 4 stations each)
         LSTM(64, activation='tanh', return_sequences=True, kernel_regularizer=regularizers.l2(0.001)),     # Return full sequence for next LSTM
-        LSTM(32, activation='tanh', return_sequences=False),     # Return final output only
-        #LSTM(16, activation='tanh', return_sequences=False),
+        LSTM(32, activation='tanh', return_sequences=False),    # Return final output only
         Dropout(0.2),
         #Dense(64, activation='relu'),
-        Dense(6, activation='linear')  # Output layer for 6 features (rf and wl)
+        Dense(8, activation='linear')  # Output layer for 8 features (rf and wl for 4 stations each)
     ])
 
-    model.compile(optimizer='adam', loss='mae', metrics=['mae'])
+    model.compile(optimizer='adam', loss=custom_loss_with_variance, metrics=['mae'])
 
     early_stop = EarlyStopping(
         monitor='val_loss', 
@@ -191,4 +212,4 @@ def plot_predictions_with_error(true_data, predicted_data, title):
 if __name__ == "__main__":
     training()
     evaluation()
-    
+    print("hi")

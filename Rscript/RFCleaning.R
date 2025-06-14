@@ -1,6 +1,7 @@
 library(dplyr)
 library(tidyverse)
 library(stringr)
+library(ggplot2)
 
 klangRF = read.csv("C:\\Users\\USER\\Downloads\\klangRF.csv")
 klangRF
@@ -51,7 +52,7 @@ ggplot(klangRF, aes(x = dt, y = clean)) +
 write.csv(klangRF, "C:\\Users\\USER\\Desktop\\Python\\ASymposium\\cleaned_klangRF.csv", row.names = FALSE)
 
 
-klangWL = read.csv("C:\\Users\\USER\\Downloads\\klangWL.csv")
+klangWL = read.csv("C:\\Users\\asus\\Downloads\\klangWL.csv")
 
 klangWL
 
@@ -63,7 +64,8 @@ klangWL = klangWL %>%
   dplyr::rename(datetime = dt,
                 wl = clean1) %>% 
   filter(wl != -9999, 
-         str_sub(Time, -2, -1) == "00") %>%
+         str_sub(Time, -2, -1) == "00",
+         station_id %in% c("PEKANMERU")) %>%
   select(-c(Date, Time))
 
 klangWL = klangWL %>%
@@ -71,10 +73,12 @@ klangWL = klangWL %>%
   mutate(normal = ifelse(is.na(normal), first(na.omit(normal)), normal)) %>%
   ungroup()
 
+View(klangWL)
+
 klangWL %>% distinct(station_id, .keep_all = TRUE)
 klangWL
 
-
+colSums(is.na(klangWL))
 
 klangWL %>%
   filter(station_id == "27233") %>%
@@ -90,3 +94,5 @@ ggplot(klangWL, aes(x = datetime, y = wl)) +
   labs(title = "Water Levels by Station", x = "Time", y = "Water Level") +
   theme_minimal()
 
+write.csv(klangWL, "C:\\Users\\asus\\Desktop\\Python\\ASymposium\\Data\\normal_klangWL.csv", row.names = FALSE)
+  

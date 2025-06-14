@@ -4,8 +4,8 @@ library(stringr)
 library(mice)
 library(plyr)
 
-klangRF = read.csv("C:\\Users\\USER\\Desktop\\Python\\ASymposium\\Data\\cleaned_klangRF.csv")
-klangWL = read.csv("C:\\Users\\USER\\Desktop\\Python\\ASymposium\\Data\\cleaned_klangWL.csv")
+klangRF = read.csv("C:\\Users\\asus\\Desktop\\Python\\ASymposium\\Data\\cleaned_klangRF.csv")
+klangWL = read.csv("C:\\Users\\ASUS\\Desktop\\Python\\ASymposium\\Data\\normal_klangWL.csv")
 klangWL
 klangWL %>% distinct(station_id, .keep_all = TRUE)
 klangWL %>%
@@ -75,4 +75,4 @@ klangWL$veryheavy[is.na(klangWL$veryheavy)] = get_mode(klangWL$veryheavy)
 
 colSums(is.na(klangWL))
 summary(klangWL)
-write.csv(klangWL, "C:\\Users\\USER\\Desktop\\Python\\ASymposium\\Data\\cleaned_klangWLRF.csv", row.names = FALSE)
+write.csv(klangWL, "C:\\Users\\asus\\Desktop\\Python\\ASymposium\\Data\\normal_klangWLRF.csv", row.names = FALSE)
