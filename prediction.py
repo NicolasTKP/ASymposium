@@ -6,17 +6,27 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Input
 from joblib import dump, load
+import tensorflow.keras.backend as K
+
+def predict_with_uncertainty(model, input_data, n_iter=5):
+    predictions = np.array([
+        model(input_data, training=True).numpy()  # Enable dropout during inference
+        for _ in range(n_iter)
+    ])
+    mean_prediction = predictions.mean(axis=0)
+    std_prediction = predictions.std(axis=0)
+    return mean_prediction, std_prediction
 
 def create_sequences(input_data, n_steps=365):
     input_data = np.array(input_data)
     
     if len(input_data) >= n_steps:
-        seq_x = input_data[-n_steps:, :]
+        seq_x = input_data[-n_steps:, :6]
         return np.array([seq_x])
     else:
         raise ValueError(f"Input data has fewer rows ({len(input_data)}) than n_steps ({n_steps})")
 
-model = load('Model/wl_model.keras')
+model = load('Model/daily_wl_model.keras')
 
 # import data
 df = pd.read_csv('Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
@@ -36,26 +46,34 @@ for col in wlT.columns:
     if not mode.empty:
         wlT[col].fillna(mode[0], inplace=True)
 # scare the data within the range of 0 to 1, and convert the data to numpy array
-scaler = load('scaler.save')
+scaler = load('daily_scaler.save')
 combined_data = pd.concat([rfT, wlT], axis=1)
+combined_data = combined_data[combined_data.index.astype(str).str.len() == 10] # optional: convert the data to daily based
 scaled_data = scaler.transform(combined_data)
 # convert the numpy arrays back to df
 columns = [rfT.columns.tolist() + wlT.columns.tolist()]
 input_df = pd.DataFrame(scaled_data, columns=columns)
+rfTP = rfT.add_suffix('_prob')
+wlTP = wlT.add_suffix('_prob')
+prob_columns = rfTP.columns.tolist() + wlTP.columns.tolist()
+input_df[prob_columns] = 0
 
 # Define the number of steps for prediction
-n_steps = 10  # hour
+n_steps = 14  # days
 
 # Define the ppredicted df to insert the predicted values
 predicted_df = input_df.tail(n_steps)
 
-for i in range(n_steps):  # Predict one year ahead
+for i in range(365):  # Predict one year ahead
     # Define the input data for prediction
     input_data = create_sequences(predicted_df, n_steps=n_steps)
 
     # Predict the values using the model
-    predicted_value = model.predict(input_data)
+    predicted_value, uncertainty = predict_with_uncertainty(model, input_data)
+    print(f"Uncertainty: {uncertainty}")
+    prob_df = pd.DataFrame(uncertainty, columns=prob_columns)
     temp_df = pd.DataFrame(predicted_value, columns=columns)
+    temp_df = pd.concat([temp_df, prob_df], axis=1)
     predicted_df = pd.concat([predicted_df, temp_df], axis=0)
 
 

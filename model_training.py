@@ -7,6 +7,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Input, Dropout, LayerNormalization
 from joblib import dump, load
 from sklearn.metrics import mean_squared_error, r2_score
+from tensorflow.keras import regularizers
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 # Function to extract the data into an array of sequences. Eg: (if n_steps=20, y = row 20)
 def create_sequences(input_data, n_steps, n_ahead=1):
@@ -55,10 +57,12 @@ print(combined_data.shape)
 scaled_data = scaler.fit_transform(combined_data)
 dump(scaler, 'daily_scaler.save')
 
+
+
 # split 70% data for training, 20% for validate, 10% for testing
 total_samples = len(scaled_data)
 train_end = int(total_samples * 0.7)
-validation_end = int(total_samples * 0.9)
+validation_end = int(total_samples * 0.85)
 train_data = scaled_data[:train_end]
 validation_data = scaled_data[train_end:validation_end]
 testing_data = scaled_data[validation_end:]
@@ -79,9 +83,10 @@ print("Validation Data Stats:\n", stats_validation, "\n")
 print("Testing Data Stats:\n", stats_testing, "\n")
 
 # create training data with the sequences function
-X_train, y_train = create_sequences(train_data, n_steps=7) # 7 days
-X_validation, y_validation = create_sequences(validation_data, n_steps=7) # 7 days
-X_test, y_test = create_sequences(testing_data, n_steps=7) # 7 days
+n_steps = 14 
+X_train, y_train = create_sequences(train_data, n_steps=n_steps) # n_steps days
+X_validation, y_validation = create_sequences(validation_data, n_steps=n_steps) # n_steps days
+X_test, y_test = create_sequences(testing_data, n_steps=n_steps) # n_steps days
 print("Training data shape:", X_train.shape, y_train.shape)
 print("Validation data shape:", X_validation.shape, y_validation.shape)
 print("Testing data shape:", X_test.shape, y_test.shape)
@@ -89,24 +94,37 @@ print("Testing data shape:", X_test.shape, y_test.shape)
 def training():
     # Build the LSTM model
     model = Sequential([
-        Input(shape=(7, 6)), # shape = 168 hours, 6 features (rf and wl for 3 stations each)
-        LSTM(128, return_sequences=True, dropout=0.2, recurrent_dropout=0.2),     # Return full sequence for next LSTM
-        LayerNormalization(),
-        LSTM(64, return_sequences=False, dropout=0.2, recurrent_dropout=0.2),     # Return final output only
-        LayerNormalization(),
-        Dense(64, activation='relu'),
+        Input(shape=(n_steps, 6)), # n_steps = days, 6 features (rf and wl for 3 stations each)
+        LSTM(64, activation='tanh', return_sequences=True, kernel_regularizer=regularizers.l2(0.001)),     # Return full sequence for next LSTM
+        LSTM(32, activation='tanh', return_sequences=False),     # Return final output only
+        #LSTM(16, activation='tanh', return_sequences=False),
+        Dropout(0.2),
+        #Dense(64, activation='relu'),
         Dense(6, activation='linear')  # Output layer for 6 features (rf and wl)
     ])
 
     model.compile(optimizer='adam', loss='mae', metrics=['mae'])
 
+    early_stop = EarlyStopping(
+        monitor='val_loss', 
+        patience=30, 
+        restore_best_weights=True  
+    )
+
+    lr_scheduler = ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.5,
+        patience=5,
+        min_lr=1e-5
+    )
 
     # Train the model & save the model and training history
     history = model.fit(
         X_train, y_train,
-        epochs=30,
+        epochs=150,
         batch_size=32,
-        validation_data=(X_validation, y_validation)
+        validation_data=(X_validation, y_validation),
+        callbacks=[early_stop, lr_scheduler] 
     )
     dump(model, 'Model/daily_wl_model.keras')
     dump(history, 'Model/daily_model_history.joblib')
@@ -131,12 +149,12 @@ def evaluation():
     train_pred = model.predict(X_train)
     validation_pred = model.predict(X_validation)
     test_pred = model.predict(X_test)
-    y_train = scaler.inverse_transform(y_train)
-    y_validation = scaler.inverse_transform(y_validation)
-    y_test = scaler.inverse_transform(y_test)
-    train_pred = scaler.inverse_transform(train_pred)
-    validation_pred = scaler.inverse_transform(validation_pred) 
-    test_pred = scaler.inverse_transform(test_pred)
+    # y_train = scaler.inverse_transform(y_train)
+    # y_validation = scaler.inverse_transform(y_validation)
+    # y_test = scaler.inverse_transform(y_test)
+    # train_pred = scaler.inverse_transform(train_pred)
+    # validation_pred = scaler.inverse_transform(validation_pred) 
+    # test_pred = scaler.inverse_transform(test_pred)
     print("MSE:", mean_squared_error(y_test, test_pred))
     print("R² Score:", r2_score(y_test, test_pred))
     test_loss = model.evaluate(X_test, y_test)
