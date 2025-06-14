@@ -43,12 +43,15 @@ scaled_data = scaler.transform(combined_data)
 columns = [rfT.columns.tolist() + wlT.columns.tolist()]
 input_df = pd.DataFrame(scaled_data, columns=columns)
 
-# Define the ppredicted df to insert the predicted values
-predicted_df = input_df.tail(365)
+# Define the number of steps for prediction
+n_steps = 10  # hour
 
-for i in range(365):  # Predict one year ahead
+# Define the ppredicted df to insert the predicted values
+predicted_df = input_df.tail(n_steps)
+
+for i in range(n_steps):  # Predict one year ahead
     # Define the input data for prediction
-    input_data = create_sequences(predicted_df, n_steps=365)
+    input_data = create_sequences(predicted_df, n_steps=n_steps)
 
     # Predict the values using the model
     predicted_value = model.predict(input_data)
@@ -58,7 +61,7 @@ for i in range(365):  # Predict one year ahead
 
 reversed_data = scaler.inverse_transform(predicted_df)
 reversed_df = pd.DataFrame(reversed_data, columns=columns)
-reversed_df = reversed_df.iloc[365:]
+reversed_df = reversed_df.iloc[n_steps:]
 print(reversed_df)
 # Save the predicted values to a CSV file
 reversed_df.to_csv('Data/predicted_klangWLRF.csv', index=False)
