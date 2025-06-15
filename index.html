@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Insurance Mapping</title>
+    <style>
+      #map {
+        height: 400px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Map location</h3>
+    <div id="map"></div>
+    <p id="output"></p>
+    <p id="prob"></p>
+    
+  </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>
+        function initMap() {
+        const points = [
+            { lat: 3.027787, lng: 101.483633 }, //27234 P/A Kg. Sg. Kandis
+            { lat: 3.040738, lng: 101.448149 }, //3014080_ Sg. Klang di Bandar Klang
+            { lat: 3.006211, lng: 101.412465 }, //PANDAMARAN P/A Pandamaran
+            { lat: 3.011168, lng: 101.372673 }, //SELATMUARA   Sg. Klang di Selat Muara
+            { lat: 3.132988, lng: 101.439373} //PEKANMERU   Sg. Binjai di Pekan Meru 
+        ];
+        const stations = ['P/A Kg. Sg. Kandis', 'Sg. Klang di Bandar Klang', 'PANDAMARAN P/A Pandamaran', 'Sg. Klang di Selat Muara', 'Sg. Binjai di Pekan Meru']
+
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 12,
+            center: points[0],
+        });
+        let markers = [];
+        let circle;
+
+        points.forEach((point, i) => {
+            const marker = new google.maps.Marker({
+            position: point,
+            map: map,
+            label: `${i + 1}`,
+            });
+            markers.push(marker);
+            marker.setMap(null);
+        });
+        
+
+        map.addListener("click", (e) => {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            document.getElementById("output").innerText = `Clicked location: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}`;
+            
+            if (circle) {
+                circle.setMap(null);
+            }
+
+            circle = new google.maps.Circle({
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.6,
+                strokeWeight: 2,
+                fillColor: "#FF0000",
+                fillOpacity: 0.2,
+                map,
+                center: { lat: lat, lng: lng },
+                radius: 3000, // 1 km in meters
+                clickable: false
+            });
+
+            function factorial(n) {
+                if (n === 0 || n === 1) return 1;
+                return n * factorial(n - 1);
+            }
+
+            function nCr(n, r) {
+                if (r > n) return 0;
+                return factorial(n) / (factorial(r) * factorial(n - r));
+            }
+
+            function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Earth radius in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+            }
+
+            let nearbyPoints = [];
+            let prob = {
+                'P(X > Danger * 1.05)': 0,
+                'P(X > Danger * 1.1)': 0,
+                'P(X > Danger * 1.15)':0
+            }
+            markers.forEach((marker, i) => {
+                const point = points[i];
+                const distance = getDistanceFromLatLonInKm(lat, lng, point.lat, point.lng);
+
+                if (distance <= 3) {
+                    marker.setMap(map); // show marker
+                    nearbyPoints.push(`Marker ${i + 1}: ${stations[i]} (Distance: ${distance.toFixed(2)} km)`);
+                    Papa.parse('Data/probability_klangWL.csv', {
+                        download: true,
+                        header: true,
+                        complete: function(results) {
+                            data = results.data;
+                            console.log(data[i]);
+                            if (prob['P(X > Danger * 1.05)'] != 0){
+                                const original = Number(prob['P(X > Danger * 1.05)']);
+                                const newProb = Number(data[i]['P(X > Danger * 1.05)']);
+                                // Calculate P(A ∪ B) = P(A) + P(B) - P(A) * P(B)
+                                const eitherHappens = original + newProb - (original * newProb);
+                                prob['P(X > Danger * 1.05)'] = eitherHappens;
+                            } else {
+                                prob['P(X > Danger * 1.05)'] = data[i]['P(X > Danger * 1.05)']
+                                console.log(prob['P(X > Danger * 1.05)'])
+                            }
+                            if (prob['P(X > Danger * 1.1)'] != 0){
+                                const original = Number(prob['P(X > Danger * 1.1)']);
+                                const newProb = Number(data[i]['P(X > Danger * 1.1)']);
+                                // Calculate P(A ∪ B) = P(A) + P(B) - P(A) * P(B)
+                                const eitherHappens = original + newProb - (original * newProb);
+                                prob['P(X > Danger * 1.1)'] = eitherHappens;
+                            } else {
+                                prob['P(X > Danger * 1.1)'] = data[i]['P(X > Danger * 1.1)']
+                                console.log(prob['P(X > Danger * 1.1)'])
+                            }
+                            if (prob['P(X > Danger * 1.15)'] != 0){
+                                const original = Number(prob['P(X > Danger * 1.15)']);
+                                const newProb = Number(data[i]['P(X > Danger * 1.15)']);
+                                // Calculate P(A ∪ B) = P(A) + P(B) - P(A) * P(B)
+                                const eitherHappens = original + newProb - (original * newProb);
+                                prob['P(X > Danger * 1.15)'] = eitherHappens;
+                            } else {
+                                prob['P(X > Danger * 1.15)'] = data[i]['P(X > Danger * 1.15)']
+                                console.log(prob['P(X > Danger * 1.15)'])
+                            }
+                            display(nearbyPoints, prob)
+                        }
+                    });
+                } else {
+                    marker.setMap(null);
+                }
+            });
+
+            function display(points, probs){
+                if (nearbyPoints.length > 0) {
+                    document.getElementById("output").innerText = `Clicked location: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}`;
+                    document.getElementById("output").innerHTML += "<br>Points within 10km:<br>" + points.join("<br>");
+                    document.getElementById("prob").innerHTML = "Flood Probability of P(X > Danger * 1.05):<br>" + parseFloat(probs['P(X > Danger * 1.05)']).toFixed(50) + "<br>";
+                    document.getElementById("prob").innerHTML += "Flood Probability of P(X > Danger * 1.1):<br>" + parseFloat(probs['P(X > Danger * 1.1)']).toFixed(50) + "<br>";
+                    document.getElementById("prob").innerHTML += "Flood Probability of P(X > Danger * 1.15):<br>" + parseFloat(probs['P(X > Danger * 1.15)']).toFixed(50) + "<br>";
+                } else {
+                    document.getElementById("output").innerHTML = "No points within 10km.";
+                    document.getElementById("prob").innerHTML = "";
+                }
+            }
+            
+        });
+        }
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdzbH1WmxQb5w7qFtg9YL2kMTdj79l_8U&callback=initMap" async defer></script>
+</html>
