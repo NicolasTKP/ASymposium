@@ -3,8 +3,8 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df = pd.read_csv('Data/predicted_klangWLRF.csv')
-ori_df = pd.read_csv('Data/cleaned_klangWLRF.csv')
+df = pd.read_csv('../Data/predicted_klangWLRF.csv')
+ori_df = pd.read_csv('../Data/cleaned_klangWLRF.csv')
 columns = df.columns[4:]
 
 danger_dic = {
@@ -40,7 +40,7 @@ for col in columns:
     prob_df.at[prob_df.index[-1], 'P(X > Danger * 1.15)'] = round(p_exceed, 50)
 
 print(prob_df)
-prob_df.to_csv('Data/probability_klangWLRF.csv', index=False)
+prob_df.to_csv('../Data/probability_klangWLRF.csv', index=False)
 # days = 365
 # prob_at_least_once = 1 - (1 - p_exceed) ** days
 # print(f"Chance of exceeding at least once in a year for {col}: {prob_at_least_once:.20f}")

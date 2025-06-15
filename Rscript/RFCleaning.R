@@ -3,14 +3,7 @@ library(tidyverse)
 library(stringr)
 library(ggplot2)
 
-klangRF = read.csv("C:\\Users\\USER\\Downloads\\klangRF.csv")
-klangRF
-klangRF %>%
-  filter(station_id == "27233") %>%
-  arrange(dt)
-
-summary(klangRF)
-is.na(klangRF)
+klangRF = read.csv("..\\Data\\klangRF.csv")
 
 klangRF = klangRF %>% 
   select(-c(raw)) %>% 
@@ -25,20 +18,6 @@ klangRF = klangRF %>%
          c15min != -9999) %>% 
   select(-c(Date, Time))
 
-klangRF %>%
-  filter(station_id == "27233") %>%
-  arrange(dt)
-
-
-summary(klangRF)
-View(klangRF)
-
-klang
-
-klangRF_nested <- klangRF %>%
-  group_by(station_id) %>%
-  nest()
-
 ggplot(klangRF, aes(x = dt, y = clean)) +
   geom_line() +
   geom_hline(aes(yintercept = light), linetype = "dotted", color = "green") +
@@ -49,12 +28,10 @@ ggplot(klangRF, aes(x = dt, y = clean)) +
   labs(title = "Rain Fall by Station", x = "Time", y = "Rain Fall") +
   theme_minimal()
 
-write.csv(klangRF, "C:\\Users\\USER\\Desktop\\Python\\ASymposium\\cleaned_klangRF.csv", row.names = FALSE)
+write.csv(klangRF, "..\\Data\\cleaned_klangRF.csv", row.names = FALSE)
 
 
-klangWL = read.csv("C:\\Users\\asus\\Downloads\\klangWL.csv")
-
-klangWL
+klangWL = read.csv("..\\Data\\klangWL.csv")
 
 klangWL = klangWL %>% 
   select(-c(raw1)) %>% 
@@ -66,23 +43,8 @@ klangWL = klangWL %>%
   filter(wl != -9999, 
          str_sub(Time, -2, -1) == "00",
          station_id %in% c("PEKANMERU")) %>%
-  select(-c(Date, Time))
-
-klangWL = klangWL %>%
-  group_by(station_id) %>%
-  mutate(normal = ifelse(is.na(normal), first(na.omit(normal)), normal)) %>%
-  ungroup()
-
-View(klangWL)
-
-klangWL %>% distinct(station_id, .keep_all = TRUE)
-klangWL
-
-colSums(is.na(klangWL))
-
-klangWL %>%
-  filter(station_id == "27233") %>%
-  arrange(desc(datetime))
+  select(-c(Date, Time)) %>%
+  mutate(normal = ifelse(is.na(normal), first(na.omit(normal)), normal))
 
 ggplot(klangWL, aes(x = datetime, y = wl)) +
   geom_line() +
@@ -94,5 +56,5 @@ ggplot(klangWL, aes(x = datetime, y = wl)) +
   labs(title = "Water Levels by Station", x = "Time", y = "Water Level") +
   theme_minimal()
 
-write.csv(klangWL, "C:\\Users\\asus\\Desktop\\Python\\ASymposium\\Data\\normal_klangWL.csv", row.names = FALSE)
+write.csv(klangWL, "..\\Data\\cleaned_klangWL.csv", row.names = FALSE)
   

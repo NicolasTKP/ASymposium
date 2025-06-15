@@ -36,12 +36,12 @@ def create_sequences(input_data, n_steps):
     else:
         raise ValueError(f"Input data has fewer rows ({len(input_data)}) than n_steps ({n_steps})")
 
-model = load_model('Model/daily_wl_model.keras', custom_objects={
+model = load_model('../Model/daily_wl_model.keras', custom_objects={
     'custom_loss_with_variance': custom_loss_with_variance
 })
 
 # import data
-df = pd.read_csv('Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
+df = pd.read_csv('../Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
 df.index = pd.to_datetime(df.index, format='mixed')
 df['date_only'] = df.index.date
 max_wl_per_day = df.loc[df.groupby('date_only')['wl'].idxmax()]
@@ -63,7 +63,7 @@ for col in wlT.columns:
     if not mode.empty:
         wlT[col].fillna(mode[0], inplace=True)
 # scare the data within the range of 0 to 1, and convert the data to numpy array
-scaler = load('daily_scaler.save')
+scaler = load('../Model/daily_scaler.save')
 combined_data = pd.concat([rfT, wlT], axis=1)
 #combined_data = combined_data[combined_data.index.astype(str).str.len() == 10] # optional: convert the data to daily based
 scaled_data = scaler.transform(combined_data)
@@ -105,5 +105,5 @@ print(reversed_df)
 #reversed_df = pd.concat([reversed_df, prob_df], axis=1)
 #print(reversed_df)
 # Save the predicted values to a CSV file
-reversed_df.to_csv('Data/predicted_klangWLRF.csv', index=False)
+reversed_df.to_csv('../Data/predicted_klangWLRF.csv', index=False)
 

@@ -25,7 +25,7 @@ def create_sequences(input_data, n_steps, n_ahead=1):
 
 
 # import data
-df = pd.read_csv('Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
+df = pd.read_csv('../Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
 df.index = pd.to_datetime(df.index, format='mixed')
 df['date_only'] = df.index.date
 max_wl_per_day = df.loc[df.groupby('date_only')['wl'].idxmax()]
@@ -70,7 +70,7 @@ min_values = combined_data.min() * 0.7  # 30% lower
 max_values = combined_data.max() * 1.3  # 30% higher
 scaler.fit(pd.DataFrame([min_values, max_values]))
 scaled_data = scaler.transform(combined_data)
-dump(scaler, 'daily_scaler.save')
+dump(scaler, '../Model/daily_scaler.save')
 
 
 
@@ -147,14 +147,14 @@ def training():
         validation_data=(X_validation, y_validation),
         callbacks=[early_stop, lr_scheduler] 
     )
-    dump(model, 'Model/daily_wl_model.keras')
-    dump(history, 'Model/daily_model_history.joblib')
+    dump(model, '../Model/daily_wl_model.keras')
+    dump(history, '../Model/daily_model_history.joblib')
 
 def evaluation():
     global X_train, y_train, X_validation, y_validation, X_test, y_test, scaler
     # Load the model and history
-    model = load('Model/daily_wl_model.keras')
-    history = load('Model/daily_model_history.joblib')
+    model = load('../Model/daily_wl_model.keras')
+    history = load('../Model/daily_model_history.joblib')
 
     # Plot the training and validation loss
     plt.figure(figsize=(10, 6))

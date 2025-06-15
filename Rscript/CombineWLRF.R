@@ -4,13 +4,8 @@ library(stringr)
 library(mice)
 library(plyr)
 
-klangRF = read.csv("C:\\Users\\asus\\Desktop\\Python\\ASymposium\\Data\\cleaned_klangRF.csv")
-klangWL = read.csv("C:\\Users\\ASUS\\Desktop\\Python\\ASymposium\\Data\\normal_klangWL.csv")
-klangWL
-klangWL %>% distinct(station_id, .keep_all = TRUE)
-klangWL %>%
-  filter(station_id == "SELATMUARA") %>%
-  arrange(desc(datetime))
+klangRF = read.csv("..\\Data\\cleaned_klangRF.csv")
+klangWL = read.csv("..\\Data\\normal_klangWL.csv")
 
 View(klangRF)
 
@@ -30,7 +25,6 @@ klangWL <- merge(
   by = c("station_id", "datetime"),
   all.x = TRUE  
 )
-View(klangWL)
 
 
 selected_cols = klangWL %>% select(rf, rf15min, rfhourly, rfdaily, rfyearly, light, moderate, heavy, veryheavy)
@@ -75,4 +69,4 @@ klangWL$veryheavy[is.na(klangWL$veryheavy)] = get_mode(klangWL$veryheavy)
 
 colSums(is.na(klangWL))
 summary(klangWL)
-write.csv(klangWL, "C:\\Users\\asus\\Desktop\\Python\\ASymposium\\Data\\normal_klangWLRF.csv", row.names = FALSE)
+write.csv(klangWL, "..\\Data\\normal_klangWLRF.csv", row.names = FALSE)
