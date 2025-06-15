@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-ori_df = pd.read_csv('Data/normal_klangWLRF.csv')
-predict_df = pd.read_csv('Data/predicted_normal_klangWLRF.csv')
+ori_df = pd.read_csv('Data/cleaned_klangWLRF.csv')
+predict_df = pd.read_csv('Data/predicted_klangWLRF.csv')
 
 # Select columns 0 to 6
 columns_to_plot = predict_df.columns[1:]
@@ -28,19 +28,22 @@ danger_dic = {
     'SELATMUARA': 3.0
 }
 
+df = pd.DataFrame(columns=['Station', 'Station Name','Danger Level', 'Exceedance Count', 'Exceedance Count (1.1x)', 'Exceedance Count (1.2x)', 'Exceedance Count (1.3x)', '2-Day Danger Exceedance Count'])
+
 for station in danger_dic:
     danger_level = danger_dic[station]
     key_index = list(danger_dic.keys()).index(station)
     column_name = predict_df.columns[key_index+4]
     column = predict_df[column_name]
     count = (column > danger_level).sum()
-    print(f"Number of times {station} exceeds danger level {danger_level}: {count}")
-
-for station in danger_dic:
-    danger_level = danger_dic[station]
-    key_index = list(danger_dic.keys()).index(station)
-    column_name = predict_df.columns[key_index + 4]
-    column = predict_df[column_name]
+    new_row = pd.DataFrame([{'Station': station, 'Station Name': ori_df.loc[ori_df['station_id'] == station, 'station_name'].values[0], 'Danger Level': danger_level, 'Exceedance Count': count}])
+    df = pd.concat([df, new_row], ignore_index=True)
+    count = (column > danger_level*1.1).sum()
+    df.at[df.index[-1], 'Exceedance Count (1.1x)'] = count
+    count = (column > danger_level*1.2).sum()
+    df.at[df.index[-1], 'Exceedance Count (1.2x)'] = count
+    count = (column > danger_level*1.3).sum()
+    df.at[df.index[-1], 'Exceedance Count (1.3x)'] = count
 
     above_danger = (column > danger_level).values
 
@@ -53,4 +56,7 @@ for station in danger_dic:
         else:
             i += 1
 
-    print(f"Number of 2-day danger exceedances for {station} (> {danger_level}): {count}")
+    df.at[df.index[-1], '2-Day Danger Exceedance Count'] = count
+
+print(df)
+df.to_csv('Data/klang_flood_severity.csv', index=False)
