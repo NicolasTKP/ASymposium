@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-# Depths and corresponding EALs (for Duration = 2)
+# Duration and corresponding EALs
 depths = [3.15, 3.3, 3.45]
 durations = [1, 2, 3, 4]
 eals = [
@@ -34,6 +34,8 @@ plt.ylabel("Expected Annual Loss (RM)")
 plt.grid(True)
 plt.show()
 
+
+# Asset value to EALs
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -41,14 +43,11 @@ import matplotlib.pyplot as plt
 damage_ratio = 0.0314
 probability = 0.015647
 
-# Vary building and content values
 building_values = np.arange(300000, 550000, 50000)
 content_values = np.arange(30000, 80000, 10000)
 
-# Store EAL results in a 2D matrix
 eal_matrix = np.zeros((len(building_values), len(content_values)))
 
-# Calculate EAL for each combination
 for i, b in enumerate(building_values):
     for j, c in enumerate(content_values):
         total_asset = b + c
@@ -56,7 +55,6 @@ for i, b in enumerate(building_values):
         eal = el * probability
         eal_matrix[i, j] = eal
 
-# Plotting as a heatmap
 import seaborn as sns
 import pandas as pd
 
@@ -89,23 +87,6 @@ total_losses = [EAL * y for y in years]
 
 for y, loss in zip(years, total_losses):
     print(f"{y}-year loss projection: RM{loss:.2f}")
-
-
-# Policy Design Sensitivity
-print("Policy Design Sensitivity:")
-damage_ratio = 0.0444
-asset = 391000 + 48429
-raw_el = damage_ratio * asset
-
-deductible = 10000
-cap = 30000
-
-if raw_el < deductible:
-    payout = 0
-else:
-    payout = min(raw_el, cap)
-
-print(f"Raw EL: RM{raw_el:.2f}, Final payout: RM{payout:.2f}")
 
 
 # Inflation Sensitivity
