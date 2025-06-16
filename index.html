@@ -63,7 +63,7 @@
                 fillOpacity: 0.2,
                 map,
                 center: { lat: lat, lng: lng },
-                radius: 3000, // 1 km in meters
+                radius: 3000, // 3 km in meters
                 clickable: false
             });
 
@@ -100,7 +100,7 @@
                 const point = points[i];
                 const distance = getDistanceFromLatLonInKm(lat, lng, point.lat, point.lng);
 
-                if (distance <= 3) {
+                if (distance <= 3) { // 3 km
                     marker.setMap(map); // show marker
                     nearbyPoints.push(`Marker ${i + 1}: ${stations[i]} (Distance: ${distance.toFixed(2)} km)`);
                     Papa.parse('Data/probability_klangWL.csv', {
