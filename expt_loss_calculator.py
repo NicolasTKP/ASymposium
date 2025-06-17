@@ -8,16 +8,16 @@ params = {
 
 
 
-prob_df = pd.read_csv('Data/probability_klangWL.csv')
+prob_df = pd.read_csv('Data/Py_output/probability_klangWL.csv')
 def adjusted_damage_ratio(d_actual, h_actual,d_avg=2, h_avg=1.1, base_ratio=0.032, k=0.5, m=0.4):
     return base_ratio * (d_actual / d_avg) ** k * (h_actual / h_avg) ** m
 
 if params['Station'] in stations:
     try:
-        df = pd.read_csv('Data/cleaned_klangWLRF.csv')
+        df = pd.read_csv('Data/R_output/cleaned_klangWLRF.csv')
         danger_lvl = df.loc[df['station_id'] == params['Station'], 'danger'].values[0]
     except:
-        df = pd.read_csv('Data/normal_klangWLRF.csv')
+        df = pd.read_csv('Data/R_output/normal_klangWLRF.csv')
         danger_lvl = df.loc[df['station_id'] == params['Station'], 'danger'].values[0]
 
     table = pd.DataFrame(columns=['Depth', 'Flood_Duration', 'Probability', 'Building_Value', 'Content_Value', 'Damage_Ratio', 'Estimated_Loss', 'EAL'])
@@ -49,5 +49,7 @@ if params['Station'] in stations:
 
 print("Pricing Table:")
 print(table)
-print(f"Total EAL: {sum(table['EAL'])}")
-table.to_csv('Data/pricing.csv', index=False)
+eal_at_duration_4 = table[table['Flood_Duration'] == 4]
+total_eal = eal_at_duration_4.groupby('Depth')['EAL'].sum()
+print(total_eal.sum())
+table.to_csv('Data/Py_output/pricing.csv', index=False)
