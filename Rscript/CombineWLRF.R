@@ -1,17 +1,10 @@
-library(dplyr)
-library(tidyverse)
-library(stringr)
-library(mice)
-library(plyr)
-
-klangRF = read.csv("C:\\Users\\USER\\Desktop\\Python\\ASymposium\\cleaned_klangRF.csv")
-klangWL = read.csv("C:\\Users\\USER\\Desktop\\Python\\ASymposium\\cleaned_klangWL.csv")
-
+klangRF = read.csv("../Data/R_output/cleaned_klangRF.csv")
+klangWL = read.csv("../Data/R_output/normal_klangWL.csv")
 
 View(klangRF)
 
 klangRF = klangRF %>%
-  rename(
+    dplyr::rename(
     datetime = dt, 
     rf = clean,
     rfhourly = chourly,
@@ -26,7 +19,6 @@ klangWL <- merge(
   by = c("station_id", "datetime"),
   all.x = TRUE  
 )
-View(klangWL)
 
 
 selected_cols = klangWL %>% select(rf, rf15min, rfhourly, rfdaily, rfyearly, light, moderate, heavy, veryheavy)
@@ -71,4 +63,6 @@ klangWL$veryheavy[is.na(klangWL$veryheavy)] = get_mode(klangWL$veryheavy)
 
 colSums(is.na(klangWL))
 summary(klangWL)
-write.csv(klangWL, "C:\\Users\\USER\\Desktop\\Python\\ASymposium\\cleaned_klangWLRF.csv", row.names = FALSE)
+
+########################### Export Data ###########################
+write.csv(klangWL, "../Data/R_output/normal_klangWLRF.csv", row.names = FALSE)
