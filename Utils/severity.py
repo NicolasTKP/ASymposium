@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-ori_df = pd.read_csv('../Data/cleaned_klangWLRF.csv')
-predict_df = pd.read_csv('../Data/predicted_klangWLRF.csv')
+ori_df = pd.read_csv('../Data/R_output/cleaned_klangWLRF.csv')
+predict_df = pd.read_csv('../Data/Py_output/predicted_klangWLRF.csv')
 
 # Select columns 0 to 6
 columns_to_plot = predict_df.columns[1:]
@@ -59,4 +59,4 @@ for station in danger_dic:
     df.at[df.index[-1], '2-Day Danger Exceedance Count'] = count
 
 print(df)
-df.to_csv('../Data/klang_flood_severity.csv', index=False)
+df.to_csv('../Data/Py_output/klang_flood_severity.csv', index=False)

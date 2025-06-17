@@ -1,11 +1,5 @@
-library(dplyr)
-library(tidyverse)
-library(stringr)
-library(mice)
-library(plyr)
-
-klangRF = read.csv("..\\Data\\cleaned_klangRF.csv")
-klangWL = read.csv("..\\Data\\normal_klangWL.csv")
+klangRF = read.csv("../Data/R_output/cleaned_klangRF.csv")
+klangWL = read.csv("../Data/R_output/normal_klangWL.csv")
 
 View(klangRF)
 
@@ -69,4 +63,6 @@ klangWL$veryheavy[is.na(klangWL$veryheavy)] = get_mode(klangWL$veryheavy)
 
 colSums(is.na(klangWL))
 summary(klangWL)
-write.csv(klangWL, "..\\Data\\normal_klangWLRF.csv", row.names = FALSE)
+
+########################### Export Data ###########################
+write.csv(klangWL, "../Data/R_output/normal_klangWLRF.csv", row.names = FALSE)

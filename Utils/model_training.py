@@ -25,7 +25,7 @@ def create_sequences(input_data, n_steps, n_ahead=1):
 
 
 # import data
-df = pd.read_csv('../Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
+df = pd.read_csv('../Data/R_output/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
 df.index = pd.to_datetime(df.index, format='mixed')
 df['date_only'] = df.index.date
 max_wl_per_day = df.loc[df.groupby('date_only')['wl'].idxmax()]

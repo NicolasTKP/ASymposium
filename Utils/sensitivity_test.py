@@ -39,7 +39,7 @@ plt.show()
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Fixed values from a scenario (e.g., depth=3.15, duration=2)
+# depth=3.15, duration=2
 damage_ratio = 0.0314
 probability = 0.015647
 

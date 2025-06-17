@@ -1,10 +1,9 @@
-library(dplyr)
-library(tidyverse)
-library(stringr)
-library(ggplot2)
+klangRF = read.csv("../Data/Raw_Data/klangRF.csv")
+klangWL = read.csv("../Data/Raw_Data/klangWL.csv")
 
-klangRF = read.csv("..\\Data\\klangRF.csv")
+########################### Data Cleaning ###########################
 
+### Klang rain fall data ###
 klangRF = klangRF %>% 
   select(-c(raw)) %>% 
   mutate(dt = dmy_hm(dt), 
@@ -18,21 +17,24 @@ klangRF = klangRF %>%
          c15min != -9999) %>% 
   select(-c(Date, Time))
 
-ggplot(klangRF, aes(x = dt, y = clean)) +
-  geom_line() +
-  geom_hline(aes(yintercept = light), linetype = "dotted", color = "green") +
-  geom_hline(aes(yintercept = moderate), linetype = "dotted", color = "blue") +
-  geom_hline(aes(yintercept = heavy), linetype = "dotted", color = "orange") +
-  geom_hline(aes(yintercept = veryheavy), linetype = "dotted", color = "red") +
-  facet_wrap(~ station_id, scales = "free_y") +
-  labs(title = "Rain Fall by Station", x = "Time", y = "Rain Fall") +
-  theme_minimal()
+### Klang water level data ###
 
-write.csv(klangRF, "..\\Data\\cleaned_klangRF.csv", row.names = FALSE)
+# for graph plotting
+klangWL2 = klangWL %>% 
+  select(-c(raw1)) %>% 
+  mutate(dt = dmy_hm(dt), 
+         Date = as.Date(dt), 
+         Time = format(dt, "%H:%M")) %>% 
+  dplyr::rename(datetime = dt,
+         wl = clean1) %>% 
+  filter(wl != -9999, 
+         str_sub(Time, -2, -1) == "00",
+         ! is.na(normal), 
+         datetime < as.Date("2024-05-01")) %>%
+  select(-c(Date, Time)) %>%
+  mutate(normal = ifelse(is.na(normal), first(na.omit(normal)), normal))
 
-
-klangWL = read.csv("..\\Data\\klangWL.csv")
-
+# for data used later
 klangWL = klangWL %>% 
   select(-c(raw1)) %>% 
   mutate(dt = dmy_hm(dt), 
@@ -46,7 +48,19 @@ klangWL = klangWL %>%
   select(-c(Date, Time)) %>%
   mutate(normal = ifelse(is.na(normal), first(na.omit(normal)), normal))
 
-ggplot(klangWL, aes(x = datetime, y = wl)) +
+########################### Data Visualization ###########################
+
+ggplot(klangRF, aes(x = dt, y = clean)) +
+  geom_line() +
+  geom_hline(aes(yintercept = light), linetype = "dotted", color = "green") +
+  geom_hline(aes(yintercept = moderate), linetype = "dotted", color = "blue") +
+  geom_hline(aes(yintercept = heavy), linetype = "dotted", color = "orange") +
+  geom_hline(aes(yintercept = veryheavy), linetype = "dotted", color = "red") +
+  facet_wrap(~ station_id, scales = "free_y") +
+  labs(title = "Rain Fall by Station", x = "Time", y = "Rain Fall") +
+  theme_minimal()
+
+ggplot(klangWL2, aes(x = datetime, y = wl)) +
   geom_line() +
   geom_hline(aes(yintercept = normal), linetype = "dotted", color = "green") +
   geom_hline(aes(yintercept = alert), linetype = "dotted", color = "blue") +
@@ -56,5 +70,9 @@ ggplot(klangWL, aes(x = datetime, y = wl)) +
   labs(title = "Water Levels by Station", x = "Time", y = "Water Level") +
   theme_minimal()
 
-write.csv(klangWL, "..\\Data\\cleaned_klangWL.csv", row.names = FALSE)
+########################### Export Data ###########################
+setwd(OutputFile)
+write.csv(klangRF,"../Data/R_output/cleaned_klangRF.csv", row.names = FALSE)
+write.csv(klangWL, "../Data/R_output/cleaned_klangWL.csv", row.names = FALSE)
   
+setwd(WorkingPath)

@@ -41,7 +41,7 @@ model = load_model('../Model/daily_wl_model.keras', custom_objects={
 })
 
 # import data
-df = pd.read_csv('../Data/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
+df = pd.read_csv('../Data/R_output/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
 df.index = pd.to_datetime(df.index, format='mixed')
 df['date_only'] = df.index.date
 max_wl_per_day = df.loc[df.groupby('date_only')['wl'].idxmax()]
@@ -105,5 +105,5 @@ print(reversed_df)
 #reversed_df = pd.concat([reversed_df, prob_df], axis=1)
 #print(reversed_df)
 # Save the predicted values to a CSV file
-reversed_df.to_csv('../Data/predicted_klangWLRF.csv', index=False)
+reversed_df.to_csv('../Data/Py_output/predicted_klangWLRF.csv', index=False)
 

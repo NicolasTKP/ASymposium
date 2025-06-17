@@ -1,5 +1,4 @@
-Data/klangWL.csv
-Data/waterlevels.csv
-Data/klangRF.csv
-Data/kedahRF.csv
 /to_send
+/Data/Raw_Data/klangRF.csv
+/Data/Raw_Data/klangWL.csv
+/Data/Raw_Data/kedahRF.csv
