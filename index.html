@@ -101,6 +101,13 @@
             header: true,
             complete: function(results) {
                 const raw = results.data;
+                console.log("Full parsed result:", raw);
+    
+                if (raw.length > 0) {
+                console.log("Headers in first row:", Object.keys(raw[0]));
+                } else {
+                console.warn("CSV loaded but no rows found!");
+                }
                 const data = raw.filter(row =>
                 row &&
                 typeof row['P1'] !== 'undefined' &&
