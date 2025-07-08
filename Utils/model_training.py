@@ -210,6 +210,6 @@ def plot_predictions_with_error(true_data, predicted_data, title):
 
 
 if __name__ == "__main__":
-    training()
+    # training()
     evaluation()
     print("hi")
