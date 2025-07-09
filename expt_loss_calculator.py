@@ -48,5 +48,11 @@ if params['Station'] in stations:
 
 print("Pricing Table:")
 print(table)
+<<<<<<< HEAD
 print(f"Total EAL: {sum(table['EAL'])}")
+=======
+eal_at_duration_4 = table[table['Flood_Duration'] == 4]
+total_eal = eal_at_duration_4.groupby('Depth')['EAL'].sum()
+print(total_eal.sum())
+>>>>>>> cc5042b97d6b37eb4de91493a2d9fda4506dffc5
 table.to_csv('Data/Py_output/pricing.csv', index=False)

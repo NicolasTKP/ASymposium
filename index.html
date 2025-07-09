@@ -92,77 +92,87 @@
 
             let nearbyPoints = [];
             let prob = {
-                'P(X > Danger * 1.05)': 0,
-                'P(X > Danger * 1.1)': 0,
-                'P(X > Danger * 1.15)':0
+                'P1': 0,
+                'P2': 0,
+                'P3':0
             }
-            markers.forEach((marker, i) => {
-                const point = points[i];
-                const distance = getDistanceFromLatLonInKm(lat, lng, point.lat, point.lng);
-
-                if (distance <= 3) { // 3 km
-                    marker.setMap(map); // show marker
-                    nearbyPoints.push(`Marker ${i + 1}: ${stations[i]} (Distance: ${distance.toFixed(2)} km)`);
-                    Papa.parse('Data/probability_klangWL.csv', {
-                        download: true,
-                        header: true,
-                        complete: function(results) {
-                            data = results.data;
-                            console.log(data[i]);
-                            if (prob['P(X > Danger * 1.05)'] != 0){
-                                const original = Number(prob['P(X > Danger * 1.05)']);
-                                const newProb = Number(data[i]['P(X > Danger * 1.05)']);
-                                // Calculate P(A ∪ B) = P(A) + P(B) - P(A) * P(B)
-                                const eitherHappens = original + newProb - (original * newProb);
-                                prob['P(X > Danger * 1.05)'] = eitherHappens;
-                            } else {
-                                prob['P(X > Danger * 1.05)'] = data[i]['P(X > Danger * 1.05)']
-                                console.log(prob['P(X > Danger * 1.05)'])
-                            }
-                            if (prob['P(X > Danger * 1.1)'] != 0){
-                                const original = Number(prob['P(X > Danger * 1.1)']);
-                                const newProb = Number(data[i]['P(X > Danger * 1.1)']);
-                                // Calculate P(A ∪ B) = P(A) + P(B) - P(A) * P(B)
-                                const eitherHappens = original + newProb - (original * newProb);
-                                prob['P(X > Danger * 1.1)'] = eitherHappens;
-                            } else {
-                                prob['P(X > Danger * 1.1)'] = data[i]['P(X > Danger * 1.1)']
-                                console.log(prob['P(X > Danger * 1.1)'])
-                            }
-                            if (prob['P(X > Danger * 1.15)'] != 0){
-                                const original = Number(prob['P(X > Danger * 1.15)']);
-                                const newProb = Number(data[i]['P(X > Danger * 1.15)']);
-                                // Calculate P(A ∪ B) = P(A) + P(B) - P(A) * P(B)
-                                const eitherHappens = original + newProb - (original * newProb);
-                                prob['P(X > Danger * 1.15)'] = eitherHappens;
-                            } else {
-                                prob['P(X > Danger * 1.15)'] = data[i]['P(X > Danger * 1.15)']
-                                console.log(prob['P(X > Danger * 1.15)'])
-                            }
-                            display(nearbyPoints, prob)
-                        }
-                    });
+            Papa.parse('Data/Py_output/probability_klangWL_bak.csv', {
+            download: true,
+            header: true,
+            complete: function(results) {
+                const raw = results.data;
+                console.log("Full parsed result:", raw);
+    
+                if (raw.length > 0) {
+                console.log("Headers in first row:", Object.keys(raw[0]));
                 } else {
-                    marker.setMap(null);
+                console.warn("CSV loaded but no rows found!");
                 }
-            });
+                const data = raw.filter(row =>
+                row &&
+                typeof row['P1'] !== 'undefined' &&
+                typeof row['P2'] !== 'undefined' &&
+                typeof row['P3'] !== 'undefined'
+                );
+                let hasNearby = false;
+                prob = {
+                    'P1': 0,
+                    'P2': 0,
+                    'P3': 0
+                };
 
-            function display(points, probs){
-                if (nearbyPoints.length > 0) {
-                    document.getElementById("output").innerText = `Clicked location: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}`;
-                    document.getElementById("output").innerHTML += "<br>Points within 10km:<br>" + points.join("<br>");
-                    document.getElementById("prob").innerHTML = "Flood Probability of P(X > Danger * 1.05):<br>" + parseFloat(probs['P(X > Danger * 1.05)']).toFixed(50) + "<br>";
-                    document.getElementById("prob").innerHTML += "Flood Probability of P(X > Danger * 1.1):<br>" + parseFloat(probs['P(X > Danger * 1.1)']).toFixed(50) + "<br>";
-                    document.getElementById("prob").innerHTML += "Flood Probability of P(X > Danger * 1.15):<br>" + parseFloat(probs['P(X > Danger * 1.15)']).toFixed(50) + "<br>";
+                markers.forEach((marker, i) => {
+                    const point = points[i];
+                    const distance = getDistanceFromLatLonInKm(lat, lng, point.lat, point.lng);
+                    if (distance <= 3) {
+                        hasNearby = true;
+                        marker.setMap(map);
+                        nearbyPoints.push(`Marker ${i + 1}: ${stations[i]} (Distance: ${distance.toFixed(2)} km)`);
+
+                        // Calculate union probability
+                        const newP1 = parseFloat(data[i]['P1']) || 0;
+                        const newP2 = parseFloat(data[i]['P2']) || 0;
+                        const newP3 = parseFloat(data[i]['P3']) || 0;
+
+                        prob['P1'] = union(prob['P1'], newP1);
+                        prob['P2'] = union(prob['P2'], newP2);
+                        prob['P3'] = union(prob['P3'], newP3);
+                    } else {
+                        marker.setMap(null);
+                    }
+                });
+
+                if (hasNearby) {
+                    display(nearbyPoints, prob);
                 } else {
-                    document.getElementById("output").innerHTML = "No points within 10km.";
+                    document.getElementById("output").innerText = `Clicked location: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}`;
+                    document.getElementById("output").innerHTML += "<br>No points within 3km.";
                     document.getElementById("prob").innerHTML = "";
                 }
             }
+        });
+
+        function union(p1, p2) {
+            return p1 + p2 - p1 * p2;
+        }
+
+        function display(points, probs){
+            if (nearbyPoints.length > 0) {
+                document.getElementById("output").innerText = `Clicked location: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}`;
+                document.getElementById("output").innerHTML += "<br>Points within 3km:<br>" + points.join("<br>");
+                document.getElementById("prob").innerHTML = "Flood Probability of P(X > Danger * 1.05):<br>" + parseFloat(probs['P1']).toFixed(50) + "<br>";
+                document.getElementById("prob").innerHTML += "Flood Probability of P(X > Danger * 1.1):<br>" + parseFloat(probs['P2']).toFixed(50) + "<br>";
+                document.getElementById("prob").innerHTML += "Flood Probability of P(X > Danger * 1.15):<br>" + parseFloat(probs['P3']).toFixed(50) + "<br>";
+            } else {
+                document.getElementById("output").innerText = `Clicked location: Latitude ${lat.toFixed(6)}, Longitude ${lng.toFixed(6)}`;
+                document.getElementById("output").innerHTML += "<br>No points within 3km.";
+                document.getElementById("prob").innerHTML = "";
+            }
+        }
             
         });
         }
     </script>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdzbH1WmxQb5w7qFtg9YL2kMTdj79l_8U&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdzbH1WmxQb5w7qFtg9YL2kMTdj79l_8U&callback=initMap" async defer loading="async"></script>
 </html>

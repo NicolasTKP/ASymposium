@@ -25,7 +25,7 @@ def create_sequences(input_data, n_steps, n_ahead=1):
 
 
 # import data
-df = pd.read_csv('../Data/R_output/cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
+df = pd.read_csv('Data\R_output\cleaned_klangWLRF.csv', parse_dates=["datetime"], index_col="datetime")
 df.index = pd.to_datetime(df.index, format='mixed')
 df['date_only'] = df.index.date
 max_wl_per_day = df.loc[df.groupby('date_only')['wl'].idxmax()]
@@ -70,7 +70,7 @@ min_values = combined_data.min() * 0.7  # 30% lower
 max_values = combined_data.max() * 1.3  # 30% higher
 scaler.fit(pd.DataFrame([min_values, max_values]))
 scaled_data = scaler.transform(combined_data)
-dump(scaler, '../Model/daily_scaler.save')
+dump(scaler, 'Model\daily_scaler.save')
 
 
 
@@ -147,14 +147,14 @@ def training():
         validation_data=(X_validation, y_validation),
         callbacks=[early_stop, lr_scheduler] 
     )
-    dump(model, '../Model/daily_wl_model.keras')
-    dump(history, '../Model/daily_model_history.joblib')
+    dump(model, 'Model\daily_wl_model.keras')
+    dump(history, 'Model\daily_model_history.joblib')
 
 def evaluation():
     global X_train, y_train, X_validation, y_validation, X_test, y_test, scaler
     # Load the model and history
-    model = load('../Model/daily_wl_model.keras')
-    history = load('../Model/daily_model_history.joblib')
+    model = load('Model\daily_wl_model.keras')
+    history = load('Model\daily_model_history.joblib')
 
     # Plot the training and validation loss
     plt.figure(figsize=(10, 6))
@@ -178,6 +178,10 @@ def evaluation():
     # test_pred = scaler.inverse_transform(test_pred)
     print("MSE:", mean_squared_error(y_test, test_pred))
     print("R² Score:", r2_score(y_test, test_pred))
+    y_mean = np.mean(y_test, axis=0)
+    y_mean = np.tile(y_mean, (len(y_test), 1))
+    dummy_mse = mean_squared_error(y_test, y_mean)
+    print("Dummy_MSE:", dummy_mse)
     test_loss = model.evaluate(X_test, y_test)
     print("Test Loss:", test_loss)
     print("Train Loss:", model.evaluate(X_train, y_train))
@@ -210,6 +214,6 @@ def plot_predictions_with_error(true_data, predicted_data, title):
 
 
 if __name__ == "__main__":
-    training()
+    # training()
     evaluation()
     print("hi")
