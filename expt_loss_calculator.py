@@ -1,26 +1,24 @@
 import pandas as pd
 stations = ['27234', '3014080_', 'PANDAMARAN', 'SELATMUARA', 'PEKANMERU']
 params = {
-    'Station': '3014080_',
+    'Station': 'PEKANMERU',
     'building_value': 391000,
     'content_value': 48429,
 }
 
-
-
-prob_df = pd.read_csv('Data/probability_klangWL.csv')
+prob_df = pd.read_csv('Data/Py_output/probability_klangWLRF.csv')
 def adjusted_damage_ratio(d_actual, h_actual,d_avg=2, h_avg=1.1, base_ratio=0.032, k=0.5, m=0.4):
     return base_ratio * (d_actual / d_avg) ** k * (h_actual / h_avg) ** m
 
 if params['Station'] in stations:
     try:
-        df = pd.read_csv('Data/cleaned_klangWLRF.csv')
+        df = pd.read_csv('Data/R_output/cleaned_klangWLRF.csv')
         danger_lvl = df.loc[df['station_id'] == params['Station'], 'danger'].values[0]
     except:
-        df = pd.read_csv('Data/normal_klangWLRF.csv')
+        df = pd.read_csv('Data/R_output/normal_klangWLRF.csv')
         danger_lvl = df.loc[df['station_id'] == params['Station'], 'danger'].values[0]
 
-    table = pd.DataFrame(columns=['Depth', 'Flood_Duration', 'Probability', 'Building_Value', 'Content_Value', 'Damage_Ratio', 'Estimated_Loss', 'EAL'])
+    table = pd.DataFrame(columns=['Depth', 'Flood_Duration', 'Probability', 'Building_Value', 'Content_Value', 'Sum_Insured','Damage_Ratio', 'Estimated_Loss', 'EAL'])
     for i in [1.05,1.1,1.15]:
         depth = round(danger_lvl * i, 2)
         for duration in [1,2,3,4]:
@@ -41,6 +39,7 @@ if params['Station'] in stations:
                 'Probability': prob,
                 'Building_Value': params['building_value'],
                 'Content_Value': params['content_value'],
+                'Sum_Insured': params['building_value'] + params['content_value'],
                 'Damage_Ratio': dmg_ratio,
                 'Estimated_Loss': estimated_loss,
                 'EAL':eal
@@ -50,4 +49,4 @@ if params['Station'] in stations:
 print("Pricing Table:")
 print(table)
 print(f"Total EAL: {sum(table['EAL'])}")
-table.to_csv('Data/pricing.csv', index=False)
+table.to_csv('Data/Py_output/pricing.csv', index=False)
